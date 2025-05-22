@@ -28,6 +28,7 @@ import {
   Building2,
   MapPin,
   Users,
+  Check,
 } from "lucide-react";
 import { format, isAfter } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
@@ -48,6 +49,8 @@ import {
   LineChart,
   Line
 } from "recharts";
+import ExcelJS from 'exceljs';
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -146,6 +149,9 @@ export default function Dashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTender, setSelectedTender] = useState<ProcurementSelect | null>(null);
   const [showTenderDetail, setShowTenderDetail] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshSuccess, setRefreshSuccess] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   
   const itemsPerPage = 10;
   
@@ -261,6 +267,405 @@ export default function Dashboard() {
     { name: 'Q4', efficiency: 88, satisfaction: 93, completion: 98 },
   ];
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    setRefreshSuccess(false);
+    
+    try {
+      await refetch();
+      setRefreshSuccess(true);
+      toast.success("Data refreshed successfully");
+      
+      // Reset success state after 2 seconds
+      setTimeout(() => {
+        setRefreshSuccess(false);
+      }, 2000);
+    } catch (error) {
+      toast.error("Failed to refresh data");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleExportToExcel = async () => {
+    if (!data || data.length === 0) {
+      toast.error("No data available to export");
+      return;
+    }
+
+    setIsExporting(true);
+
+    try {
+      // Create a new workbook
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'Bidding Insights';
+      workbook.lastModifiedBy = 'Bidding Insights';
+      workbook.created = new Date();
+      workbook.modified = new Date();
+
+      // Add a worksheet
+      const worksheet = workbook.addWorksheet('Bidding Insights Procurement Data', {
+        properties: { tabColor: { argb: 'FF3B82F6' } }
+      });
+
+      // Add branded header section
+      const headerStartRow = 1;
+      
+      // Company name row
+      worksheet.mergeCells(`A${headerStartRow}:J${headerStartRow}`);
+      const companyNameCell = worksheet.getCell(`A${headerStartRow}`);
+      companyNameCell.value = 'BIDDING INSIGHTS';
+      companyNameCell.font = { 
+        bold: true, 
+        size: 28, 
+        color: { argb: 'FFFFFFFF' },
+        name: 'Arial Black'
+      };
+      companyNameCell.alignment = { 
+        horizontal: 'center', 
+        vertical: 'middle' 
+      };
+      companyNameCell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF1E40AF' } // Rich blue background
+      };
+      const companyNameRow = worksheet.getRow(headerStartRow);
+      companyNameRow.height = 50;
+
+      // Slogan row
+      const sloganRow = headerStartRow + 1;
+      worksheet.mergeCells(`A${sloganRow}:J${sloganRow}`);
+      const sloganCell = worksheet.getCell(`A${sloganRow}`);
+      sloganCell.value = "Namibia's Most Advanced Procurement Platform";
+      sloganCell.font = { 
+        italic: true, 
+        bold: true,
+        size: 16, 
+        color: { argb: 'FFFFFFFF' },
+        name: 'Arial'
+      };
+      sloganCell.alignment = { 
+        horizontal: 'center', 
+        vertical: 'middle' 
+      };
+      sloganCell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF3B82F6' } // Lighter blue gradient
+      };
+      const sloganRowObj = worksheet.getRow(sloganRow);
+      sloganRowObj.height = 35;
+
+      // Export metadata row
+      const metadataRow = headerStartRow + 2;
+      worksheet.mergeCells(`A${metadataRow}:J${metadataRow}`);
+      const metadataCell = worksheet.getCell(`A${metadataRow}`);
+      metadataCell.value = `Procurement Data Export | Generated: ${format(new Date(), "MMMM dd, yyyy 'at' HH:mm")} | Total Records: ${data.length}`;
+      metadataCell.font = { 
+        size: 12, 
+        bold: true,
+        color: { argb: 'FF1E293B' },
+        name: 'Arial'
+      };
+      metadataCell.alignment = { 
+        horizontal: 'center', 
+        vertical: 'middle' 
+      };
+      metadataCell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFEFF6FF' } // Light blue background
+      };
+      const metadataRowObj = worksheet.getRow(metadataRow);
+      metadataRowObj.height = 30;
+
+      // Add decorative border to header section with vibrant colors
+      for (let row = headerStartRow; row <= metadataRow; row++) {
+        for (let col = 1; col <= 10; col++) {
+          const cell = worksheet.getCell(row, col);
+          cell.border = {
+            top: row === headerStartRow ? { style: 'thick', color: { argb: 'FF7C3AED' } } : { style: 'medium', color: { argb: 'FF3B82F6' } },
+            left: col === 1 ? { style: 'thick', color: { argb: 'FF7C3AED' } } : { style: 'medium', color: { argb: 'FF3B82F6' } },
+            bottom: row === metadataRow ? { style: 'thick', color: { argb: 'FF7C3AED' } } : { style: 'medium', color: { argb: 'FF3B82F6' } },
+            right: col === 10 ? { style: 'thick', color: { argb: 'FF7C3AED' } } : { style: 'medium', color: { argb: 'FF3B82F6' } }
+          };
+        }
+      }
+
+      // Add spacing row with color
+      const spacingRow = metadataRow + 1;
+      const spacingRowObj = worksheet.getRow(spacingRow);
+      spacingRowObj.height = 20;
+      for (let col = 1; col <= 10; col++) {
+        const cell = worksheet.getCell(spacingRow, col);
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFF1F5F9' }
+        };
+      }
+
+      // Define columns with styling - start after header section
+      const dataStartRow = spacingRow + 1;
+      worksheet.columns = [
+        { header: 'Reference Number', key: 'refNumber', width: 22 },
+        { header: 'Title', key: 'title', width: 55 },
+        { header: 'Status', key: 'status', width: 18 },
+        { header: 'Opening Date', key: 'openingDate', width: 18 },
+        { header: 'Closing Date', key: 'closingDate', width: 22 },
+        { header: 'Created Date', key: 'createdDate', width: 22 },
+        { header: 'Updated Date', key: 'updatedDate', width: 22 },
+        { header: 'Bid Document URL', key: 'bidDocument', width: 35 },
+        { header: 'Bid Report URL', key: 'bidReport', width: 35 },
+        { header: 'Bidding Insights', key: 'amendments', width: 35 },
+      ];
+
+      // Move headers to correct position and style them with vibrant colors
+      const headerRow = worksheet.getRow(dataStartRow);
+      headerRow.height = 40;
+      headerRow.eachCell((cell, colNumber) => {
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 13, name: 'Arial' };
+        
+        // Gradient colors for different columns
+        const headerColors = [
+          'FF10B981', // Emerald
+          'FF3B82F6', // Blue
+          'FF8B5CF6', // Purple
+          'FFF59E0B', // Amber
+          'FFEF4444', // Red
+          'FF06B6D4', // Cyan
+          'FF84CC16', // Lime
+          'FFF97316', // Orange
+          'FFEC4899', // Pink
+          'FF6366F1'  // Indigo
+        ];
+        
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: headerColors[(colNumber - 1) % headerColors.length] }
+        };
+        
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        cell.border = {
+          top: { style: 'medium', color: { argb: 'FFFFFFFF' } },
+          left: { style: 'medium', color: { argb: 'FFFFFFFF' } },
+          bottom: { style: 'medium', color: { argb: 'FFFFFFFF' } },
+          right: { style: 'medium', color: { argb: 'FFFFFFFF' } }
+        };
+      });
+
+      // Add data rows with colorful styling
+      data.forEach((tender, index) => {
+        const rowNumber = dataStartRow + 1 + index;
+        const row = worksheet.addRow({
+          refNumber: tender.ref_number || '',
+          title: tender.title,
+          status: tender.status,
+          openingDate: tender.opening_date 
+            ? format(new Date(tender.opening_date), "yyyy-MM-dd")
+            : '',
+          closingDate: tender.closing_date 
+            ? format(new Date(tender.closing_date), "yyyy-MM-dd HH:mm:ss")
+            : '',
+          createdDate: tender.created_at 
+            ? format(new Date(tender.created_at), "yyyy-MM-dd HH:mm:ss")
+            : '',
+          updatedDate: tender.updated_at 
+            ? format(new Date(tender.updated_at), "yyyy-MM-dd HH:mm:ss")
+            : '',
+          bidDocument: tender.bid_document_cdn_url || '',
+          bidReport: tender.bid_report_cdn_url || '',
+          amendments: tender.amendments || '',
+        });
+
+        // Set increased row height for better readability
+        row.height = 35;
+
+        // Style data rows with vibrant alternating colors and padding
+        row.eachCell((cell, colNumber) => {
+          cell.alignment = { 
+            vertical: 'middle', 
+            wrapText: true,
+            indent: 1
+          };
+          cell.font = { size: 11, name: 'Arial' };
+          cell.border = {
+            top: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+            left: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+            bottom: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+            right: { style: 'thin', color: { argb: 'FFD1D5DB' } }
+          };
+          
+          // Enhanced alternating row colors with subtle tints
+          if (index % 2 === 0) {
+            const evenRowColors = [
+              'FFECFDF5', // Light emerald
+              'FFEFF6FF', // Light blue
+              'FFF3F4F6', // Light gray
+              'FFFFFBEB', // Light amber
+              'FFFEF2F2', // Light red
+              'FFECFEFF', // Light cyan
+              'FFF7FEE7', // Light lime
+              'FFFFF7ED', // Light orange
+              'FFFDF2F8', // Light pink
+              'FFEEF2FF'  // Light indigo
+            ];
+            cell.fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: evenRowColors[(colNumber - 1) % evenRowColors.length] }
+            };
+          } else {
+            cell.fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFFFFFFF' }
+            };
+          }
+        });
+
+        // Enhanced status cell styling with vibrant colors
+        const statusCell = row.getCell('status');
+        const status = tender.status.toLowerCase();
+        
+        if (status === 'open') {
+          statusCell.font = { color: { argb: 'FFFFFFFF' }, bold: true, size: 11 };
+          statusCell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF10B981' } // Vibrant emerald
+          };
+        } else if (status === 'closed') {
+          statusCell.font = { color: { argb: 'FFFFFFFF' }, bold: true, size: 11 };
+          statusCell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF6B7280' } // Vibrant gray
+          };
+        } else if (status === 'awarded') {
+          statusCell.font = { color: { argb: 'FFFFFFFF' }, bold: true, size: 11 };
+          statusCell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF3B82F6' } // Vibrant blue
+          };
+        } else if (status === 'pending') {
+          statusCell.font = { color: { argb: 'FFFFFFFF' }, bold: true, size: 11 };
+          statusCell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFF59E0B' } // Vibrant amber
+          };
+        }
+
+        statusCell.alignment = { 
+          horizontal: 'center', 
+          vertical: 'middle' 
+        };
+        statusCell.border = {
+          top: { style: 'medium', color: { argb: 'FFFFFFFF' } },
+          left: { style: 'medium', color: { argb: 'FFFFFFFF' } },
+          bottom: { style: 'medium', color: { argb: 'FFFFFFFF' } },
+          right: { style: 'medium', color: { argb: 'FFFFFFFF' } }
+        };
+      });
+
+      // Add extra spacing before footer with colorful styling
+      const footerStartRow = dataStartRow + data.length + 4;
+      
+      // Add colorful spacer rows
+      for (let i = 1; i <= 2; i++) {
+        const spacerRowNum = dataStartRow + data.length + i;
+        const spacerRow = worksheet.getRow(spacerRowNum);
+        spacerRow.height = 10;
+        for (let col = 1; col <= 10; col++) {
+          const cell = worksheet.getCell(spacerRowNum, col);
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: i === 1 ? 'FFEDE9FE' : 'FFDDD6FE' } // Purple gradient
+          };
+        }
+      }
+
+      // Enhanced footer section with vibrant styling
+      worksheet.mergeCells(`A${footerStartRow}:J${footerStartRow}`);
+      const footerCell = worksheet.getCell(`A${footerStartRow}`);
+      footerCell.value = `© ${new Date().getFullYear()} Bidding Insights | Procurement Intelligence Platform | Contact: info@biddinginsights.na`;
+      footerCell.font = { 
+        italic: true, 
+        bold: true,
+        color: { argb: 'FFFFFFFF' }, 
+        size: 11,
+        name: 'Arial'
+      };
+      footerCell.alignment = { 
+        horizontal: 'center', 
+        vertical: 'middle' 
+      };
+      footerCell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF7C3AED' } // Vibrant purple
+      };
+      
+      // Enhanced footer styling
+      const footerRow = worksheet.getRow(footerStartRow);
+      footerRow.height = 35;
+      
+      // Add colorful border to footer
+      for (let col = 1; col <= 10; col++) {
+        const cell = worksheet.getCell(footerStartRow, col);
+        cell.border = {
+          top: { style: 'thick', color: { argb: 'FF8B5CF6' } },
+          left: col === 1 ? { style: 'thick', color: { argb: 'FF8B5CF6' } } : { style: 'medium', color: { argb: 'FF8B5CF6' } },
+          bottom: { style: 'thick', color: { argb: 'FF8B5CF6' } },
+          right: col === 10 ? { style: 'thick', color: { argb: 'FF8B5CF6' } } : { style: 'medium', color: { argb: 'FF8B5CF6' } }
+        };
+      }
+
+      // Add freeze panes to keep headers visible when scrolling - adjust for new header
+      worksheet.views = [
+        { 
+          state: 'frozen', 
+          xSplit: 0, 
+          ySplit: dataStartRow, // Freeze at data start row instead of row 1
+          topLeftCell: `A${dataStartRow + 1}`,
+          activeCell: `A${dataStartRow + 1}`
+        }
+      ];
+
+      // Generate filename with current date
+      const currentDate = format(new Date(), "yyyy-MM-dd_HH-mm-ss");
+      const filename = `Bidding Insights Procurement Data.xlsx`;
+
+      // Generate buffer and create download
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { 
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+      });
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(`Excel file exported successfully: ${filename}`);
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error("Failed to export data to Excel");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <Toaster 
@@ -294,15 +699,29 @@ export default function Dashboard() {
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={() => refetch()}
-              className="bg-white/80 backdrop-blur-sm hover:bg-white border-slate-200"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="bg-white/80 backdrop-blur-sm hover:bg-white border-slate-200 transition-all duration-200"
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
+              {refreshSuccess ? (
+                <>
+                  <Check className="h-4 w-4 mr-2 text-emerald-600" />
+                  <span className="text-emerald-600">Refreshed</span>
+                </>
+              ) : (
+                <>
+                  <RefreshCw className={`h-4 w-4 mr-2 transition-transform duration-500 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  {isRefreshing ? 'Refreshing...' : 'Refresh'}
+                </>
+              )}
             </Button>
-            <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-500/25">
-              <Download className="h-4 w-4 mr-2" />
-              Export Report
+            <Button 
+              onClick={handleExportToExcel}
+              disabled={isExporting || !data || data.length === 0}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-500/25 transition-all duration-200"
+            >
+              <Download className={`h-4 w-4 mr-2 ${isExporting ? 'animate-bounce' : ''}`} />
+              {isExporting ? 'Exporting...' : 'Export All'}
             </Button>
           </div>
         </motion.div>
