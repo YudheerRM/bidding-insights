@@ -1,0 +1,1 @@
+ALTER TABLE "office_of_the_prime_minister_procurement" DROP CONSTRAINT "office_of_the_prime_minister_procurement_id_unique";

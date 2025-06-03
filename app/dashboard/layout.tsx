@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   BarChart3,
@@ -11,9 +12,18 @@ import {
   Menu,
   Settings,
   X,
+  User,
+  LogOut,
+  Shield,
+  Building2,
+  Eye,
+  Users,
+  Gavel,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import { Providers } from "@/app/providers";
 
 export default function DashboardLayout({
@@ -23,13 +33,102 @@ export default function DashboardLayout({
 }>) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: session, status } = useSession();
 
-  const navItems = [
-    { icon: Home, label: "Overview", href: "/dashboard" },
-    { icon: BarChart3, label: "Analytics", href: "/dashboard/analytics" },
-    { icon: FileText, label: "Tenders", href: "/dashboard/tenders" },
-    { icon: Settings, label: "Settings", href: "/dashboard/settings" },
-  ];
+  const getNavItems = () => {
+    const baseItems = [
+      { icon: Home, label: "Overview", href: "/dashboard" },
+      { icon: BarChart3, label: "Analytics", href: "/dashboard/analytics" },
+      { icon: FileText, label: "Tenders", href: "/dashboard/tenders" },
+    ];
+
+    if (!session?.user) return baseItems;
+
+    const userType = session.user.userType;
+
+    // Add user-type specific navigation items
+    switch (userType) {
+      case 'admin':
+        return [
+          ...baseItems,
+          { icon: Users, label: "User Management", href: "/dashboard/users" },
+          { icon: Shield, label: "Admin Panel", href: "/dashboard/admin" },
+          { icon: Settings, label: "Settings", href: "/dashboard/settings" },
+        ];
+      case 'government_official':
+        return [
+          ...baseItems,
+          { icon: Gavel, label: "Manage Tenders", href: "/dashboard/manage" },
+          { icon: Settings, label: "Settings", href: "/dashboard/settings" },
+        ];
+      case 'bidder':
+        return [
+          ...baseItems,
+          { icon: FileText, label: "My Bids", href: "/dashboard/bids" },
+          { icon: Settings, label: "Settings", href: "/dashboard/settings" },
+        ];
+      case 'viewer':
+        return [
+          ...baseItems,
+          { icon: Settings, label: "Settings", href: "/dashboard/settings" },
+        ];
+      default:
+        return [
+          ...baseItems,
+          { icon: Settings, label: "Settings", href: "/dashboard/settings" },
+        ];
+    }
+  };
+
+  const navItems = getNavItems();
+
+  const getUserTypeIcon = (userType: string) => {
+    switch (userType) {
+      case 'government_official':
+        return <Shield className="w-4 h-4" />;
+      case 'bidder':
+        return <Building2 className="w-4 h-4" />;
+      case 'admin':
+        return <Shield className="w-4 h-4" />;
+      case 'viewer':
+        return <Eye className="w-4 h-4" />;
+      default:
+        return <User className="w-4 h-4" />;
+    }
+  };
+
+  const getUserTypeLabel = (userType: string) => {
+    switch (userType) {
+      case 'government_official':
+        return 'Government Official';
+      case 'bidder':
+        return 'Bidder';
+      case 'admin':
+        return 'Administrator';
+      case 'viewer':
+        return 'Viewer';
+      default:
+        return userType;
+    }
+  };
+
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: '/sign-in' });
+  };
+
+  if (status === "loading") {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") {
+    router.push('/sign-in');
+    return null;
+  }
 
   return (
     <Providers>
@@ -67,6 +166,7 @@ export default function DashboardLayout({
                   "group flex items-center px-3 py-2 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors",
                   pathname === item.href && "bg-sidebar-primary text-sidebar-primary-foreground"
                 )}
+                onClick={() => setSidebarOpen(false)}
               >
                 <item.icon className="mr-3 h-5 w-5" />
                 {item.label}
@@ -74,18 +174,66 @@ export default function DashboardLayout({
             ))}
           </nav>
           <div className="p-4 border-t border-sidebar-border">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Avatar>
-                  <AvatarImage src="/avatar.png" />
-                  <AvatarFallback>NA</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-sm font-medium text-sidebar-foreground">Admin</p>
-                  <p className="text-xs text-sidebar-foreground/70">admin@namibia.gov</p>
-                </div>
-              </div>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="w-full justify-start h-auto p-2">
+                  <div className="flex items-center gap-3 w-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={session?.user?.image || ""} />
+                      <AvatarFallback>
+                        {session?.user?.name?.charAt(0) || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 text-left">
+                      <p className="text-sm font-medium text-sidebar-foreground line-clamp-1">
+                        {session?.user?.name || "User"}
+                      </p>
+                      <div className="flex items-center gap-1 mt-1">
+                        {session?.user?.userType && getUserTypeIcon(session.user.userType)}
+                        <p className="text-xs text-sidebar-foreground/70 line-clamp-1">
+                          {session?.user?.userType && getUserTypeLabel(session.user.userType)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {session?.user?.name}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {session?.user?.email}
+                    </p>
+                    {session?.user?.userType && (
+                      <div className="flex items-center gap-1 mt-2">
+                        <Badge variant="outline" className="text-xs">
+                          {getUserTypeIcon(session.user.userType)}
+                          <span className="ml-1">{getUserTypeLabel(session.user.userType)}</span>
+                        </Badge>
+                        {session.user.userType === 'bidder' && session.user.subscriptionTier && (
+                          <Badge variant="secondary" className="text-xs">
+                            {session.user.subscriptionTier.toUpperCase()}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
+                  <User className="mr-2 h-4 w-4" />
+                  Profile & Settings
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </aside>
 

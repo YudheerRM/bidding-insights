@@ -684,46 +684,51 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+          className="relative overflow-hidden rounded-2xl animated-blue-gradient p-8 shadow-2xl"
         >
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent">
-              Procurement Intelligence
-            </h1>
-            <p className="text-slate-600 mt-2 text-lg">
-              Real-time insights and analytics for procurement excellence
-            </p>
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-4xl font-bold text-white drop-shadow-lg">
+                Procurement Intelligence
+              </h1>
+              <p className="text-blue-100 mt-2 text-lg drop-shadow-md">
+                Real-time insights and analytics for procurement excellence
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="bg-white/20 backdrop-blur-sm hover:bg-white/30 border-white/30 text-white hover:text-white transition-all duration-200"
+              >
+                {refreshSuccess ? (
+                  <>
+                    <Check className="h-4 w-4 mr-2 text-emerald-300" />
+                    <span className="text-emerald-300">Refreshed</span>
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className={`h-4 w-4 mr-2 transition-transform duration-500 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    {isRefreshing ? 'Refreshing...' : 'Refresh'}
+                  </>
+                )}
+              </Button>
+              <Button 
+                onClick={handleExportToExcel}
+                disabled={isExporting || !data || data.length === 0}
+                className="bg-white/20 backdrop-blur-sm hover:bg-white/30 border border-white/30 text-white hover:text-white shadow-lg transition-all duration-200"
+              >
+                <Download className={`h-4 w-4 mr-2 ${isExporting ? 'animate-bounce' : ''}`} />
+                {isExporting ? 'Exporting...' : 'Export All'}
+              </Button>
+            </div>
           </div>
           
-          <div className="flex items-center gap-3">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="bg-white/80 backdrop-blur-sm hover:bg-white border-slate-200 transition-all duration-200"
-            >
-              {refreshSuccess ? (
-                <>
-                  <Check className="h-4 w-4 mr-2 text-emerald-600" />
-                  <span className="text-emerald-600">Refreshed</span>
-                </>
-              ) : (
-                <>
-                  <RefreshCw className={`h-4 w-4 mr-2 transition-transform duration-500 ${isRefreshing ? 'animate-spin' : ''}`} />
-                  {isRefreshing ? 'Refreshing...' : 'Refresh'}
-                </>
-              )}
-            </Button>
-            <Button 
-              onClick={handleExportToExcel}
-              disabled={isExporting || !data || data.length === 0}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-500/25 transition-all duration-200"
-            >
-              <Download className={`h-4 w-4 mr-2 ${isExporting ? 'animate-bounce' : ''}`} />
-              {isExporting ? 'Exporting...' : 'Export All'}
-            </Button>
-          </div>
+          {/* Overlay for better text readability */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent"></div>
         </motion.div>
 
         {/* Key Metrics Grid */}

@@ -1,8 +1,10 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { SessionProvider } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { ThemeProvider } from "next-themes";
+import { Toaster } from "@/components/ui/sonner";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   // Create a new QueryClient instance for each session
@@ -26,22 +28,25 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider 
-        attribute="class" 
-        defaultTheme="system" 
-        enableSystem 
-        disableTransitionOnChange
-        // Set suppressHydrationWarning to avoid hydration issues
-        enableColorScheme
-      >
-        {/* Render children only on client-side to avoid hydration mismatch */}
-        {mounted ? children : (
-          <div style={{ visibility: 'hidden' }}>
-            {children}
-          </div>
-        )}
-      </ThemeProvider>
-    </QueryClientProvider>
+    <SessionProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider 
+          attribute="class" 
+          defaultTheme="system" 
+          enableSystem 
+          disableTransitionOnChange
+          // Set suppressHydrationWarning to avoid hydration issues
+          enableColorScheme
+        >
+          {/* Render children only on client-side to avoid hydration mismatch */}
+          {mounted ? children : (
+            <div style={{ visibility: 'hidden' }}>
+              {children}
+            </div>
+          )}
+          <Toaster />
+        </ThemeProvider>
+      </QueryClientProvider>
+    </SessionProvider>
   );
 }
