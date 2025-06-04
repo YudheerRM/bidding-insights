@@ -69,12 +69,11 @@ export default function UserManagement() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const queryClient = useQueryClient();
-
   // State for filters and pagination
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [userTypeFilter, setUserTypeFilter] = useState("");
-  const [isActiveFilter, setIsActiveFilter] = useState("");
+  const [userTypeFilter, setUserTypeFilter] = useState("all");
+  const [isActiveFilter, setIsActiveFilter] = useState("all");
   const [limit] = useState(10);
 
   // State for dialogs
@@ -95,13 +94,12 @@ export default function UserManagement() {
   // Fetch users with filters
   const { data: usersData, isLoading, error } = useQuery<UsersResponse>({
     queryKey: ["admin-users", page, search, userTypeFilter, isActiveFilter, limit],
-    queryFn: async () => {
-      const params = new URLSearchParams({
+    queryFn: async () => {      const params = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
         ...(search && { search }),
-        ...(userTypeFilter && { userType: userTypeFilter }),
-        ...(isActiveFilter && { isActive: isActiveFilter }),
+        ...(userTypeFilter && userTypeFilter !== "all" && { userType: userTypeFilter }),
+        ...(isActiveFilter && isActiveFilter !== "all" && { isActive: isActiveFilter }),
       });
 
       const response = await fetch(`/api/admin/users?${params}`);
@@ -238,37 +236,32 @@ export default function UserManagement() {
               className="pl-10"
             />
           </div>
-          
-          <Select value={userTypeFilter} onValueChange={setUserTypeFilter}>
+            <Select value={userTypeFilter} onValueChange={setUserTypeFilter}>
             <SelectTrigger>
               <SelectValue placeholder="Filter by user type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Types</SelectItem>
+              <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="admin">Admin</SelectItem>
               <SelectItem value="government_official">Government Official</SelectItem>
               <SelectItem value="bidder">Bidder</SelectItem>
               <SelectItem value="viewer">Viewer</SelectItem>
             </SelectContent>
-          </Select>
-
-          <Select value={isActiveFilter} onValueChange={setIsActiveFilter}>
+          </Select>          <Select value={isActiveFilter} onValueChange={setIsActiveFilter}>
             <SelectTrigger>
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Status</SelectItem>
+              <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="true">Active</SelectItem>
               <SelectItem value="false">Inactive</SelectItem>
             </SelectContent>
-          </Select>
-
-          <Button
+          </Select>          <Button
             variant="outline"
             onClick={() => {
               setSearch("");
-              setUserTypeFilter("");
-              setIsActiveFilter("");
+              setUserTypeFilter("all");
+              setIsActiveFilter("all");
               setPage(1);
             }}
             className="flex items-center gap-2"

@@ -345,9 +345,11 @@ export default function Home() {
                   </div>
                   
                   <div className="pt-4">
-                    <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
-                      Start Posting Tenders
-                    </Button>
+                    <Link href="/sign-up">
+                      <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                        Start Posting Tenders
+                      </Button>
+                    </Link>
                   </div>
                 </CardContent>
               </Card>
@@ -390,9 +392,11 @@ export default function Home() {
                   </div>
                   
                   <div className="pt-4">
-                    <Button className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700">
-                      Start Bidding Today
-                    </Button>
+                    <Link href="/sign-up">
+                      <Button className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700">
+                        Start Bidding Today
+                      </Button>
+                    </Link>
                   </div>
                 </CardContent>
               </Card>
@@ -549,7 +553,9 @@ export default function Home() {
                       <span className="text-sm">Email support</span>
                     </div>
                   </div>
-                  <Button variant="outline" className="w-full">Get Started</Button>
+                  <Link href="/sign-up">
+                    <Button variant="outline" className="w-full">Get Started</Button>
+                  </Link>
                 </CardContent>
               </Card>
             </motion.div>
@@ -584,7 +590,9 @@ export default function Home() {
                       <span className="text-sm">Custom branding</span>
                     </div>
                   </div>
-                  <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600">Start Trial</Button>
+                  <Link href="/sign-up">
+                    <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600">Start Trial</Button>
+                  </Link>
                 </CardContent>
               </Card>
             </motion.div>
@@ -612,7 +620,9 @@ export default function Home() {
                       <span className="text-sm">Email notifications</span>
                     </div>
                   </div>
-                  <Button variant="outline" className="w-full">Get Started</Button>
+                  <Link href="/sign-up">
+                    <Button variant="outline" className="w-full">Get Started</Button>
+                  </Link>
                 </CardContent>
               </Card>
             </motion.div>
@@ -644,7 +654,9 @@ export default function Home() {
                       <span className="text-sm">Application management</span>
                     </div>
                   </div>
-                  <Button className="w-full bg-gradient-to-r from-emerald-600 to-teal-600">Start Trial</Button>
+                  <Link href="/sign-up">
+                    <Button className="w-full bg-gradient-to-r from-emerald-600 to-teal-600">Start Trial</Button>
+                  </Link>
                 </CardContent>
               </Card>
             </motion.div>

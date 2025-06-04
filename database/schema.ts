@@ -99,9 +99,29 @@ export const office_of_the_prime_minister_procurement = pgTable('office_of_the_p
   updated_at: timestamp('updated_at').defaultNow().notNull(),
 });
 
+// Tender Applications table
+export const tender_applications = pgTable('tender_applications', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  user_id: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  tender_id: uuid('tender_id')
+    .notNull()
+    .references(() => office_of_the_prime_minister_procurement.id, { onDelete: 'cascade' }),
+  application_status: varchar('application_status', { length: 50 }).notNull().default('pending'), // pending, submitted, under_review, approved, rejected
+  application_date: timestamp('application_date').defaultNow().notNull(),
+  application_documents: text('application_documents'), // JSON string of uploaded documents
+  notes: text('notes'), // User notes about the application
+  created_at: timestamp('created_at').defaultNow().notNull(),
+  updated_at: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // Export types for type safety
 export type ProcurementInsert = typeof office_of_the_prime_minister_procurement.$inferInsert;
 export type ProcurementSelect = typeof office_of_the_prime_minister_procurement.$inferSelect;
+
+export type TenderApplicationInsert = typeof tender_applications.$inferInsert;
+export type TenderApplicationSelect = typeof tender_applications.$inferSelect;
 
 export type UserInsert = typeof users.$inferInsert;
 export type UserSelect = typeof users.$inferSelect;

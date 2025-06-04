@@ -236,10 +236,16 @@ export default function Dashboard() {
     setSelectedTender(tender);
     setShowTenderDetail(true);
   };
-
   const handleCloseTenderDetail = () => {
     setShowTenderDetail(false);
     setSelectedTender(null);
+  };
+
+  const handleApplicationSubmit = () => {
+    // This callback will be called when a user successfully applies to a tender
+    // You can add any additional logic here like showing a success message
+    // or updating application counts
+    toast.success("Application submitted successfully! You can view it in your applications page.");
   };
 
   // Enhanced chart data
@@ -752,12 +758,11 @@ export default function Dashboard() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
+              <CardContent>                <div className="space-y-2">
                   <p className="text-sm font-medium text-slate-600">Total Tenders</p>
-                  <p className="text-3xl font-bold text-slate-900">
+                  <div className="text-3xl font-bold text-slate-900">
                     {isLoading ? <Skeleton className="h-8 w-16" /> : metrics.total.toLocaleString()}
-                  </p>
+                  </div>
                   <p className="text-xs text-slate-500">vs last month</p>
                 </div>
               </CardContent>
@@ -778,12 +783,11 @@ export default function Dashboard() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
+              <CardContent>                <div className="space-y-2">
                   <p className="text-sm font-medium text-slate-600">Active Opportunities</p>
-                  <p className="text-3xl font-bold text-slate-900">
+                  <div className="text-3xl font-bold text-slate-900">
                     {isLoading ? <Skeleton className="h-8 w-16" /> : metrics.open.toLocaleString()}
-                  </p>
+                  </div>
                   <Progress value={(metrics.open / metrics.total) * 100} className="h-2" />
                 </div>
               </CardContent>
@@ -804,12 +808,11 @@ export default function Dashboard() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
+              <CardContent>                <div className="space-y-2">
                   <p className="text-sm font-medium text-slate-600">Success Rate</p>
-                  <p className="text-3xl font-bold text-slate-900">
+                  <div className="text-3xl font-bold text-slate-900">
                     {isLoading ? <Skeleton className="h-8 w-16" /> : `${metrics.successRate}%`}
-                  </p>
+                  </div>
                   <p className="text-xs text-slate-500">above industry avg</p>
                 </div>
               </CardContent>
@@ -830,12 +833,11 @@ export default function Dashboard() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
+              <CardContent>                <div className="space-y-2">
                   <p className="text-sm font-medium text-slate-600">Total Value</p>
-                  <p className="text-3xl font-bold text-slate-900">
+                  <div className="text-3xl font-bold text-slate-900">
                     {isLoading ? <Skeleton className="h-8 w-20" /> : `N$${(metrics.totalValue / 1000000).toFixed(1)}M`}
-                  </p>
+                  </div>
                   <p className="text-xs text-slate-500">portfolio value</p>
                 </div>
               </CardContent>
@@ -1321,12 +1323,12 @@ export default function Dashboard() {
         </motion.div>
 
         {/* Tender Detail Modal */}
-        <AnimatePresence>
-          {showTenderDetail && selectedTender && (
+        <AnimatePresence>          {showTenderDetail && selectedTender && (
             <TenderDetailCard
               tender={selectedTender}
               isOpen={showTenderDetail}
               onClose={handleCloseTenderDetail}
+              onApplicationSubmit={handleApplicationSubmit}
             />
           )}
         </AnimatePresence>

@@ -8,10 +8,13 @@
     "start": "next start",
     "lint": "next lint",
     "seed": "tsx scripts/seed.ts",
-    "seed-users": "tsx scripts/seed-users.ts"
+    "seed-users": "tsx scripts/seed-users.ts",
+    "seed-tenders": "tsx scripts/seed-tenders.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.9.1",
+    "@aws-sdk/client-s3": "^3.823.0",
+    "@aws-sdk/s3-request-presigner": "^3.823.0",
     "@hookform/resolvers": "^5.0.1",
     "@neondatabase/serverless": "^1.0.0",
     "@radix-ui/react-alert-dialog": "^1.1.14",

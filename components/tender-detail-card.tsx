@@ -2,6 +2,8 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
+import { useState } from "react";
+import { useSession } from "next-auth/react";
 import {
   X,
   Calendar,
@@ -16,6 +18,8 @@ import {
   Copy,
   ChevronRight,
   Info,
+  Send,
+  Loader2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -29,9 +33,13 @@ interface TenderDetailCardProps {
   tender: ProcurementSelect;
   isOpen: boolean;
   onClose: () => void;
+  onApplicationSubmit?: () => void;
 }
 
-export function TenderDetailCard({ tender, isOpen, onClose }: TenderDetailCardProps) {
+export function TenderDetailCard({ tender, isOpen, onClose, onApplicationSubmit }: TenderDetailCardProps) {
+  const { data: session } = useSession();
+  const [isApplying, setIsApplying] = useState(false);
+  const [hasApplied, setHasApplied] = useState(false);
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { className: string; icon: React.ReactNode }> = {
       "open": { 
@@ -130,11 +138,50 @@ export function TenderDetailCard({ tender, isOpen, onClose }: TenderDetailCardPr
       toast.success("Copied to clipboard!");
     }
   };
-
   const handleCopyReference = async () => {
     if (tender.ref_number) {
       await navigator.clipboard.writeText(tender.ref_number);
       toast.success("Reference number copied!");
+    }
+  };
+
+  const handleApplyToTender = async () => {
+    if (!session) {
+      toast.error("Please sign in to apply to tenders");
+      return;
+    }
+
+    if (tender.status.toLowerCase() !== 'open') {
+      toast.error("This tender is not accepting applications");
+      return;
+    }
+
+    setIsApplying(true);
+    try {
+      const response = await fetch('/api/tender-applications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tender_id: tender.id,
+          notes: `Application submitted for ${tender.title}`,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to submit application');
+      }
+
+      setHasApplied(true);
+      toast.success("Application submitted successfully!");
+      onApplicationSubmit?.();
+    } catch (error) {
+      console.error('Error applying to tender:', error);
+      toast.error(error instanceof Error ? error.message : "Failed to submit application");
+    } finally {
+      setIsApplying(false);
     }
   };
 
@@ -416,8 +463,39 @@ export function TenderDetailCard({ tender, isOpen, onClose }: TenderDetailCardPr
               <div className="flex items-center justify-between gap-4">
                 <Button variant="outline" onClick={onClose} className="border-slate-300">
                   Close
-                </Button>
-                <div className="flex gap-2">
+                </Button>                <div className="flex gap-2">
+                  {/* Apply to Tender Button - only show if tender is open and user hasn't applied */}
+                  {tender.status.toLowerCase() === 'open' && session && !hasApplied && (
+                    <Button 
+                      onClick={handleApplyToTender}
+                      disabled={isApplying}
+                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                    >
+                      {isApplying ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Applying...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4 mr-2" />
+                          Apply to Tender
+                        </>
+                      )}
+                    </Button>
+                  )}
+                  
+                  {/* Show applied status if user has applied */}
+                  {hasApplied && (
+                    <Button 
+                      disabled
+                      className="bg-gray-400 text-white cursor-not-allowed"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Applied
+                    </Button>
+                  )}
+                  
                   <Button 
                     variant="outline"
                     className="hover:bg-green-50 hover:border-green-200 hover:text-green-700"

@@ -7,8 +7,8 @@ export const passwordSchema = z.string()
   .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Password must contain at least one uppercase letter, one lowercase letter, and one number");
 
 export const phoneSchema = z.string()
-  .regex(/^[+]?[\d\s\-\(\)]+$/, "Please enter a valid phone number")
-  .min(10, "Phone number must be at least 10 digits");
+  .refine((val) => !val || /^[+]?[\d\s\-\(\)]+$/.test(val), "Please enter a valid phone number")
+  .refine((val) => !val || val.replace(/\s|-|\(|\)/g, '').length >= 10, "Phone number must be at least 10 digits");
 
 // Sign in schema
 export const signInSchema = z.object({

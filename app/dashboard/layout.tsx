@@ -19,6 +19,8 @@ import {
   Eye,
   Users,
   Gavel,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -26,24 +28,29 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Badge } from "@/components/ui/badge";
 import { Providers } from "@/app/providers";
 
+interface NavItem {
+  icon: React.ForwardRefExoticComponent<any>;
+  label: string;
+  href: string;
+  children?: { label: string; href: string }[];
+}
+
 export default function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
   const pathname = usePathname();
   const router = useRouter();
-  const { data: session, status } = useSession();
-
-  const getNavItems = () => {
-    const baseItems = [
+  const { data: session, status } = useSession();  const getNavItems = (): NavItem[] => {
+    const baseItems: NavItem[] = [
       { icon: Home, label: "Overview", href: "/dashboard" },
       { icon: BarChart3, label: "Analytics", href: "/dashboard/analytics" },
-      { icon: FileText, label: "Tenders", href: "/dashboard/tenders" },
     ];
 
-    if (!session?.user) return baseItems;
+    if (!session?.user) return [...baseItems, { icon: FileText, label: "Tenders", href: "/dashboard/tenders" }];
 
     const userType = session.user.userType;
 
@@ -52,30 +59,66 @@ export default function DashboardLayout({
       case 'admin':
         return [
           ...baseItems,
-          { icon: Users, label: "User Management", href: "/dashboard/users" },
+          { 
+            icon: FileText, 
+            label: "Tenders", 
+            href: "/dashboard/tenders",
+            children: [
+              { label: "My Applications", href: "/dashboard/tenders/applications" },
+              { label: "Add Tender", href: "/dashboard/tenders/add" },
+            ]
+          },
           { icon: Shield, label: "Admin Panel", href: "/dashboard/admin" },
           { icon: Settings, label: "Settings", href: "/dashboard/settings" },
         ];
       case 'government_official':
         return [
           ...baseItems,
+          { 
+            icon: FileText, 
+            label: "Tenders", 
+            href: "/dashboard/tenders",
+            children: [
+              { label: "My Applications", href: "/dashboard/tenders/applications" },
+              { label: "Add Tender", href: "/dashboard/tenders/add" },
+            ]
+          },
           { icon: Gavel, label: "Manage Tenders", href: "/dashboard/manage" },
           { icon: Settings, label: "Settings", href: "/dashboard/settings" },
         ];
       case 'bidder':
         return [
           ...baseItems,
+          { 
+            icon: FileText, 
+            label: "Tenders", 
+            href: "/dashboard/tenders",
+            children: [
+              { label: "My Applications", href: "/dashboard/tenders/applications" },
+              { label: "Add Tender", href: "/dashboard/tenders/add" },
+            ]
+          },
           { icon: FileText, label: "My Bids", href: "/dashboard/bids" },
           { icon: Settings, label: "Settings", href: "/dashboard/settings" },
         ];
       case 'viewer':
         return [
           ...baseItems,
+          { 
+            icon: FileText, 
+            label: "Tenders", 
+            href: "/dashboard/tenders",
+            children: [
+              { label: "My Applications", href: "/dashboard/tenders/applications" },
+              { label: "Add Tender", href: "/dashboard/tenders/add" },
+            ]
+          },
           { icon: Settings, label: "Settings", href: "/dashboard/settings" },
         ];
       default:
         return [
           ...baseItems,
+          { icon: FileText, label: "Tenders", href: "/dashboard/tenders" },
           { icon: Settings, label: "Settings", href: "/dashboard/settings" },
         ];
     }
@@ -156,21 +199,59 @@ export default function DashboardLayout({
             >
               <X className="h-5 w-5" />
             </Button>
-          </div>
-          <nav className="flex-1 space-y-1 p-3">
+          </div>          <nav className="flex-1 space-y-1 p-3">
             {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "group flex items-center px-3 py-2 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors",
-                  pathname === item.href && "bg-sidebar-primary text-sidebar-primary-foreground"
+              <div key={item.href}>
+                {/* Main menu item */}
+                <div
+                  className={cn(
+                    "group flex items-center px-3 py-2 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors cursor-pointer",
+                    pathname === item.href && "bg-sidebar-primary text-sidebar-primary-foreground"
+                  )}
+                  onClick={() => {
+                    if (item.children) {
+                      setExpandedMenus(prev => ({
+                        ...prev,
+                        [item.href]: !prev[item.href]
+                      }));
+                    } else {
+                      router.push(item.href);
+                      setSidebarOpen(false);
+                    }
+                  }}
+                >
+                  <item.icon className="mr-3 h-5 w-5" />
+                  <span className="flex-1">{item.label}</span>
+                  {item.children && (
+                    <div className="ml-2">
+                      {expandedMenus[item.href] ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Submenu items */}
+                {item.children && expandedMenus[item.href] && (
+                  <div className="ml-6 mt-1 space-y-1">
+                    {item.children.map((child: { label: string; href: string }) => (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        className={cn(
+                          "block px-3 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors",
+                          pathname === child.href && "bg-sidebar-primary text-sidebar-primary-foreground"
+                        )}
+                        onClick={() => setSidebarOpen(false)}
+                      >
+                        {child.label}
+                      </Link>
+                    ))}
+                  </div>
                 )}
-                onClick={() => setSidebarOpen(false)}
-              >
-                <item.icon className="mr-3 h-5 w-5" />
-                {item.label}
-              </Link>
+              </div>
             ))}
           </nav>
           <div className="p-4 border-t border-sidebar-border">

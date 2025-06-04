@@ -155,7 +155,7 @@ export default function SystemSettings() {
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-slate-600">Database</p>
                   <p className="text-2xl font-bold text-slate-900">Active</p>
-                  <p className="text-xs text-slate-500">< 50ms response time</p>
+                  <p className="text-xs text-slate-500">50ms response time</p>
                 </div>
               </CardContent>
             </Card>
