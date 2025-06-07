@@ -68,7 +68,7 @@ export default function Home() {
                 <FileText className="h-6 w-6 text-white" />
               </div>
               <span className="text-xl font-bold text-white drop-shadow-lg">
-                TenderHub Namibia
+                Bidding Insights
               </span>
             </motion.div>
 
@@ -297,7 +297,7 @@ export default function Home() {
             </h2>
             <p className="text-xl text-slate-600 max-w-2xl mx-auto">
               Whether you're posting tenders or bidding on opportunities, 
-              TenderHub has the perfect solution for you.
+              Bidding Insights has the perfect solution for you.
             </p>
           </motion.div>
 
@@ -672,7 +672,7 @@ export default function Home() {
               Ready to Transform Your Tender Process?
             </h2>
             <p className="text-xl text-slate-300 mb-8">
-              Join thousands of organizations already using TenderHub Namibia to streamline their procurement.
+              Join thousands of organizations already using Bidding Insights to streamline their procurement.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {session ? (
@@ -716,7 +716,7 @@ export default function Home() {
                   <FileText className="h-5 w-5 text-white" />
                 </div>
                 <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  TenderHub Namibia
+                  Bidding Insights
                 </span>
               </div>
               <p className="text-slate-600 mb-4 max-w-md">
@@ -752,7 +752,7 @@ export default function Home() {
           
           <div className="border-t border-slate-200 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
             <p className="text-slate-500 text-sm">
-              © 2025 TenderHub Namibia. All rights reserved.
+              © 2025 Bidding Insights. All rights reserved.
             </p>
             <div className="flex items-center gap-4 mt-4 md:mt-0">
               <span className="text-slate-500 text-sm">Powered by innovation</span>
